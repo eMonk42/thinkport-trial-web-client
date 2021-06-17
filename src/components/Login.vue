@@ -5,7 +5,7 @@
   >
     <!-- LOGIN -->
     <div
-      v-if="!showSignUp"
+      v-if="!showSignUp && !showVerification"
       class="w-64 bg-gray-300 flex-col justify-center pb-6"
     >
       <div class="flex justify-end">
@@ -24,15 +24,14 @@
       </p>
       <form @submit.prevent="login" class="flex-col justify-center mt-4">
         <div class="space-y-4 w-56 mx-auto">
-          <label for="email">Email Address</label>
+          <label for="email">User name</label>
           <input
             id="email"
             class="appearance-none rounded-sm relative block w-full px-1 border border-gray-300 placeholder-gray-500 text-gray-900  focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10"
-            name="email"
-            placeholder="Email address"
-            v-model="email"
+            name="userName"
+            placeholder="Username"
+            v-model="userName"
             type="text"
-            @blur="emailTouched = true"
           />
         </div>
         <div class="my-4 space-y-4 w-56 mx-auto">
@@ -42,15 +41,15 @@
             class="appearance-none rounded-sm relative block w-full px-1 border border-gray-300 placeholder-gray-500 text-gray-900  focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10"
             name="password"
             v-model="password"
-            type="text"
+            type="password"
             @blur="passwordTouched = true"
           />
         </div>
         <div class="px-3 mb-4">
-          <p v-if="emailError" class="px-2 text-xs text-red-600 mx-auto">
-            {{ emailError }}
+          <p class="px-2 text-xs text-red-600 mx-auto">
+            {{ submitError }}
           </p>
-          <p v-if="emailError" class="px-2 text-xs text-red-600 mx-auto">
+          <p v-if="passwordError" class="px-2 text-xs text-red-600 mx-auto">
             {{ passwordError }}
           </p>
         </div>
@@ -78,6 +77,17 @@
         >
       </p>
       <form @submit.prevent="signUp" class="flex-col justify-center mt-4">
+        <div class="space-y-4 w-56 mx-auto mb-4">
+          <label for="userNameUp">Username</label>
+          <input
+            id="userNameUp"
+            class="appearance-none rounded-sm relative block w-full px-1 border border-gray-300 placeholder-gray-500 text-gray-900  focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10"
+            name="userNameUp"
+            placeholder="Username"
+            v-model="userName"
+            type="text"
+          />
+        </div>
         <div class="space-y-4 w-56 mx-auto">
           <label for="email">Email Address</label>
           <input
@@ -97,7 +107,7 @@
             class="appearance-none rounded-sm relative block w-full px-1 border border-gray-300 placeholder-gray-500 text-gray-900  focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10"
             name="password"
             v-model="password"
-            type="text"
+            type="password"
             @blur="passwordTouched = true"
           />
         </div>
@@ -116,6 +126,18 @@
           class="block mx-auto bg-yellow-600 text-purple-900 py-1 px-4 rounded-sm font-semibold hover:bg-yellow-500"
         >
           Sign up
+        </button>
+      </form>
+    </div>
+    <!-- VERIFY -->
+    <div v-if="showVerification">
+      <form @submit.prevent="verify" class="flex-col justify-center mt-4">
+        <label for="verification">Verification Code</label>
+        <input v-model="verificationCode" id="verification" type="text" />
+        <button
+          class="block mx-auto bg-yellow-600 text-purple-900 py-1 px-4 rounded-sm font-semibold hover:bg-yellow-500"
+        >
+          verify
         </button>
       </form>
     </div>
@@ -138,6 +160,7 @@ export default {
       password: "",
       passwordTouched: false,
       submitError: "",
+      userName: "",
       showSignUp: false,
       poolData: {
         UserPoolId: "us-east-2_a2OE9ZGEa",
@@ -145,6 +168,8 @@ export default {
       },
       userPool: null,
       unconfirmed: false,
+      showVerification: false,
+      verificationCode: null,
     };
   },
   mounted() {
@@ -156,17 +181,16 @@ export default {
     },
     async login() {
       this.unconfirmed = false;
-      this.emailTouched = true;
       this.passwordTouched = true;
       this.clearErrors();
-      if (!this.entireFormIsValid) return;
+      //if (!this.entireFormIsValid) return;
       const authData = {
-        Username: this.email,
+        Username: this.userName,
         Password: this.password,
       };
       const authDetails = new AuthenticationDetails(authData);
       const userData = {
-        Username: this.email,
+        Username: this.userName,
         Pool: this.userPool,
       };
       const cognitoUser = new CognitoUser(userData);
@@ -182,16 +206,18 @@ export default {
           },
 
           onFailure: function(err) {
-            console.log(err);
+            // this.submitError = err.message;
+            // console.log(this.submitError);
+            //console.log(err);
             if (err.message == "User is not confirmed.") {
               this.unconfirmed = true;
             }
-            reject("something went wrong: ", err.message);
+            reject(err.message);
           },
         });
       });
       const user = {
-        email: this.email,
+        email: this.userName,
       };
       this.$store.commit("SET_USER", { user, token });
       this.$emit("close-login");
@@ -209,14 +235,46 @@ export default {
       };
       const arr = [new CognitoUserAttribute(mail)];
       this.userPool.signUp(
-        this.email,
+        this.userName,
         this.password,
         arr,
         null,
         (err, data) => {
-          err ? console.log(err) : console.log(data);
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(data);
+            this.showVerification = true;
+            this.showSignUp = false;
+          }
         }
       );
+    },
+    async verify() {
+      const userData = {
+        Username: this.userName,
+        Pool: this.userPool,
+      };
+      const cognitoUser = new CognitoUser(userData);
+      const token = await new Promise((resolve, reject) => {
+        cognitoUser.confirmRegistration(this.verificationCode, true, function(
+          err,
+          result
+        ) {
+          if (err) {
+            console.log(err);
+            reject(err.message);
+          } else {
+            resolve(result);
+          }
+        });
+      });
+      const user = {
+        email: this.userName,
+      };
+      this.$store.commit("SET_USER", { user, token });
+      this.showVerification = false;
+      this.$emit("close-login");
     },
   },
   computed: {
