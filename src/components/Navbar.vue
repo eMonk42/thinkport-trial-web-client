@@ -4,10 +4,7 @@
   >
     <img :src="logoLight" alt="stylisch lighthouse" class="w-16" />
     <div class="">
-      <a
-        href="https://thinkport-trial-api.auth.us-east-2.amazoncognito.com/login?client_id=74akp3g3rqfftvgrol4ot1gh4j&response_type=token&scope=aws.cognito.signin.user.admin+email+openid+profile&redirect_uri=http://localhost:8080"
-        >Login</a
-      >
+      <a href="#" @click="$emit('show-login')">Login</a>
     </div>
   </div>
 </template>
