@@ -108,6 +108,9 @@
           <p v-if="emailError" class="px-2 text-xs text-red-600 mx-auto">
             {{ passwordError }}
           </p>
+          <p v-if="unconfirmed" class="px-2 text-xs text-red-600 mx-auto">
+            Please confirm your email-address and then try to log in again.
+          </p>
         </div>
         <button
           class="block mx-auto bg-yellow-600 text-purple-900 py-1 px-4 rounded-sm font-semibold hover:bg-yellow-500"
@@ -120,6 +123,12 @@
 </template>
 <script>
 //import axios from "axios";
+import {
+  CognitoUserPool,
+  CognitoUserAttribute,
+  CognitoUser,
+  AuthenticationDetails,
+} from "amazon-cognito-identity-js";
 const EmailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 export default {
   data() {
@@ -130,17 +139,84 @@ export default {
       passwordTouched: false,
       submitError: "",
       showSignUp: false,
+      poolData: {
+        UserPoolId: "us-east-2_a2OE9ZGEa",
+        ClientId: "74akp3g3rqfftvgrol4ot1gh4j",
+      },
+      userPool: null,
+      unconfirmed: false,
     };
+  },
+  mounted() {
+    this.userPool = new CognitoUserPool(this.poolData);
   },
   methods: {
     clearErrors() {
       this.submitError = "";
     },
     async login() {
-      console.log("login started", this.email, this.password);
+      this.unconfirmed = false;
+      this.emailTouched = true;
+      this.passwordTouched = true;
+      this.clearErrors();
+      if (!this.entireFormIsValid) return;
+      const authData = {
+        Username: this.email,
+        Password: this.password,
+      };
+      const authDetails = new AuthenticationDetails(authData);
+      const userData = {
+        Username: this.email,
+        Pool: this.userPool,
+      };
+      const cognitoUser = new CognitoUser(userData);
+
+      const token = await new Promise((resolve, reject) => {
+        cognitoUser.authenticateUser(authDetails, {
+          onSuccess: function(result) {
+            //console.log(result);
+            const accessToken = result.getAccessToken().getJwtToken();
+            console.log("token gathered");
+            //console.log("token:", accessToken);
+            resolve(accessToken);
+          },
+
+          onFailure: function(err) {
+            console.log(err);
+            if (err.message == "User is not confirmed.") {
+              this.unconfirmed = true;
+            }
+            reject("something went wrong: ", err.message);
+          },
+        });
+      });
+      const user = {
+        email: this.email,
+      };
+      this.$store.commit("SET_USER", { user, token });
+      this.$emit("close-login");
     },
     async signUp() {
-      console.log("signup started", this.email, this.password);
+      this.unconfirmed = false;
+      this.emailTouched = true;
+      this.passwordTouched = true;
+      this.clearErrors();
+      if (!this.entireFormIsValid) return;
+      console.log("login started", this.email, this.password);
+      const mail = {
+        Name: "email",
+        Value: this.email,
+      };
+      const arr = [new CognitoUserAttribute(mail)];
+      this.userPool.signUp(
+        this.email,
+        this.password,
+        arr,
+        null,
+        (err, data) => {
+          err ? console.log(err) : console.log(data);
+        }
+      );
     },
   },
   computed: {

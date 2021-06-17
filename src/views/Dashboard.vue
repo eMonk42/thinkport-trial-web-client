@@ -10,10 +10,6 @@
       Here is the data from the Database:
     </h3>
     <CompanyList />
-    <p class="text-center text-lg text-gray-300 mt-20">
-      You can add/edit stuff, but therefore you have to log in /sign up first.
-      The button is in the Navbar.
-    </p>
     <p
       class="text-gray-500 mt-20 cursor-pointer inline-block hover:text-yellow-600 ml-32"
     >
