@@ -175,8 +175,8 @@ export default {
         cognitoUser.authenticateUser(authDetails, {
           onSuccess: function(result) {
             //console.log(result);
-            const accessToken = result.getAccessToken().getJwtToken();
-            console.log("token gathered");
+            const accessToken = result.idToken.jwtToken;
+            //console.log("token gathered");
             //console.log("token:", accessToken);
             resolve(accessToken);
           },
