@@ -61,7 +61,10 @@
       </form>
     </div>
     <!-- SIGNUP -->
-    <div v-else class="w-64 bg-gray-300 flex-col justify-center pb-6">
+    <div
+      v-if="!showVerification && showSignUp"
+      class="w-64 bg-gray-300 flex-col justify-center pb-6"
+    >
       <div class="flex justify-end">
         <p
           class="px-2 py-1 mt-1 mr-1 cursor-pointer inline-block text-sm font-light hover:text-purple-600 hover:bg-gray-400 rounded-sm"
@@ -130,10 +133,21 @@
       </form>
     </div>
     <!-- VERIFY -->
-    <div v-if="showVerification">
-      <form @submit.prevent="verify" class="flex-col justify-center mt-4">
-        <label for="verification">Verification Code</label>
-        <input v-model="verificationCode" id="verification" type="text" />
+    <div
+      v-if="showVerification"
+      class="w-64 bg-gray-300 flex-col justify-center pb-6"
+    >
+      <form
+        @submit.prevent="verify"
+        class="flex-col justify-center mt-4 space-y-4"
+      >
+        <label for="verification" class="ml-4">Verification Code</label>
+        <input
+          v-model="verificationCode"
+          id="verification"
+          type="text"
+          class="ml-4"
+        />
         <button
           class="block mx-auto bg-yellow-600 text-purple-900 py-1 px-4 rounded-sm font-semibold hover:bg-yellow-500"
         >
