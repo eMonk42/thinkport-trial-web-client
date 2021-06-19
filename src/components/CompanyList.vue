@@ -132,7 +132,7 @@
             <button
               class="py-1 px-3 bg-purple-800 hover:bg-purple-700 rounded-sm"
             >
-              Create
+              Save
             </button>
           </div>
         </form>
@@ -256,7 +256,7 @@ export default {
       try {
         //console.log(this.newCompany);
         const res = await axios.post(
-          "https://uguxn8t7fc.execute-api.us-east-2.amazonaws.com/test/company",
+          "https://uguxn8t7fc.execute-api.us-east-2.amazonaws.com/test/companies",
           this.fillOutCompany(this.newCompany),
           { headers: { Authorization: this.$store.state.token } }
         );
@@ -276,7 +276,7 @@ export default {
       }
       try {
         await axios.patch(
-          "https://uguxn8t7fc.execute-api.us-east-2.amazonaws.com/test/company",
+          "https://uguxn8t7fc.execute-api.us-east-2.amazonaws.com/test/companies",
           this.fillOutCompany(company),
           { headers: { Authorization: this.$store.state.token } }
         );
@@ -309,7 +309,7 @@ export default {
       const id = this.selectedCompany.id;
       try {
         await axios.delete(
-          "https://uguxn8t7fc.execute-api.us-east-2.amazonaws.com/test/company?id=" +
+          "https://uguxn8t7fc.execute-api.us-east-2.amazonaws.com/test/companies/" +
             id,
           { headers: { Authorization: this.$store.state.token } }
         );

@@ -302,7 +302,7 @@ export default {
     passwordError() {
       if (!this.passwordTouched) return "";
       if (this.password.length < 12) {
-        return "Your password must be at least 9 characters long";
+        return "Your password must be at least 12 characters long";
       }
       return "";
     },
